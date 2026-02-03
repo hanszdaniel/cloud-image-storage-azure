@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Gallery</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* NAVBAR */
+        nav {
+            background: #1e40af;
+            padding: 12px 20px;
+            display: flex;
+            gap: 20px;
+            font-size: 18px;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+        }
+
+        h2 {
+            margin: 20px;
+        }
+
+        .gallery {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .card img {
+            width: 100%;
+            border-radius: 8px;
+        }
+
+        .delete-btn {
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: #d9534f;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .delete-btn:hover {
+            background: #b52b27;
+        }
+
+        /* SUCCESS POPUP */
+        #popup {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #22c55e;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            font-size: 16px;
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+    <a href="index.html">Upload</a>
+<a href="gallery.html">Gallery</a>
+
+</nav>
+
+<h2>Azure Image Gallery</h2>
+
+<!-- POPUP -->
+<div id="popup">Deleted Successfully</div>
+
+<!-- GALLERY -->
+<div class="gallery" id="gallery"></div>
+
+<script>
+const LIST_URL = "https://cloudimagestorage-bdh3btf0czh6hve0.westeurope-01.azurewebsites.net/api/listimages";
+const DELETE_URL = "https://cloudimagestorage-bdh3btf0czh6hve0.westeurope-01.azurewebsites.net/api/deleteimage";
+
+async function loadImages() {
+    try {
+        const res = await fetch(LIST_URL);
+        const text = await res.text();
+        const data = JSON.parse(text);
+
+        const gallery = document.getElementById("gallery");
+        gallery.innerHTML = "";
+
+        if (data.length === 0) {
+            gallery.innerHTML = "<p>No images found.</p>";
+            return;
+        }
+
+        data.forEach(img => {
+            const card = document.createElement("div");
+            card.className = "card";
+
+            card.innerHTML = `
+                <img src="${img.url}" alt="">
+                <button class="delete-btn" onclick="deleteImage('${img.name}')">Delete</button>
+            `;
+
+            gallery.appendChild(card);
+        });
+
+    } catch (err) {
+        console.error(err);
+        alert("Failed to load images");
+    }
+}
+
+async function deleteImage(name) {
+    if (!confirm("Delete this image?")) return;
+
+    try {
+        const res = await fetch(`${DELETE_URL}?file=${encodeURIComponent(name)}`, {
+            method: "DELETE"
+        });
+
+        if (!res.ok) {
+            throw new Error("Delete failed");
+        }
+
+        showPopup();
+        loadImages();
+
+    } catch (err) {
+        alert(err.message);
+    }
+}
+
+/* SUCCESS POPUP */
+function showPopup() {
+    const popup = document.getElementById("popup");
+    popup.style.display = "block";
+
+    setTimeout(() => {
+        popup.style.display = "none";
+    }, 2000);
+}
+
+loadImages();
+</script>
+
+</body>
+</html>

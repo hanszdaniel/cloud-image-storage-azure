@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload Image</title>
+</head>
+<body style="font-family: Arial;">
+
+<!-- NAVBAR -->
+<nav style="
+    background:#1e40af;
+    padding:12px 20px;
+    display:flex;
+    gap:20px;
+    font-size:18px;
+">
+    <a href="index.html" style="color:white; text-decoration:none;">Upload</a>
+    <a href="gallery.html" style="color:white; text-decoration:none;">Gallery</a>
+</nav>
+
+<div style="
+    max-width:450px;
+    margin:50px auto;
+    padding:25px;
+    border:1px solid #ddd;
+    border-radius:10px;
+    text-align:center;
+    box-shadow:0px 4px 12px rgba(0,0,0,0.1);
+">
+
+    <h2 style="margin-bottom:20px;">Upload Image to Azure</h2>
+
+    <input type="file" id="fileInput" accept="image/*" style="margin-bottom:15px;"><br>
+
+    <button onclick="uploadImage()" style="
+        background:#1e40af; 
+        color:white;
+        padding:10px 20px;
+        border:none;
+        border-radius:6px;
+        cursor:pointer;
+        font-size:16px;
+    ">Upload</button>
+
+    <p id="status" style="margin-top:20px; font-weight:bold;"></p>
+</div>
+
+<script>
+async function uploadImage() {
+    const fileInput = document.getElementById("fileInput");
+    const status = document.getElementById("status");
+    const file = fileInput.files[0];
+
+    if (!file) {
+        alert("Please select an image.");
+        return;
+    }
+
+    status.innerHTML = "Uploading...";
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        const response = await fetch(
+            "https://cloudimagestorage-bdh3btf0czh6hve0.westeurope-01.azurewebsites.net/api/uploadimage",
+            {
+                method: "POST",
+                body: formData
+            }
+        );
+
+        const text = await response.text(); // ✅ SAFE
+        let result = {};
+
+        try {
+            result = JSON.parse(text); // try JSON only if valid
+        } catch {
+            throw new Error("Invalid server response");
+        }
+
+        if (!response.ok) {
+            status.innerHTML =
+                `<span style="color:red;">Error: ${result.error || "Upload failed"}</span>`;
+            return;
+        }
+
+        status.innerHTML = `
+            <span style="color:green;">Upload Successful!</span><br>
+            <a href="${result.url}" target="_blank">View Image</a>
+        `;
+
+    } catch (err) {
+        status.innerHTML =
+            `<span style="color:red;">${err.message}</span>`;
+    }
+}
+</script>
+
+
+</body>
+</html>
